@@ -1,0 +1,81 @@
+name: home-stack
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Bucharest
+      - VERSION=docker
+    volumes:
+      - /mnt/hdd/mediaserver/config/plex:/config
+      - /mnt/hdd/mediaserver/data/media:/data/media
+    restart: unless-stopped
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Bucharest
+    volumes:
+      - /mnt/hdd/mediaserver/config/sonarr:/config
+      - /mnt/hdd/mediaserver/data:/data
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Bucharest
+    volumes:
+      - /mnt/hdd/mediaserver/config/radarr:/config
+      - /mnt/hdd/mediaserver/data:/data
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Bucharest
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - /mnt/hdd/mediaserver/config/qbit:/config
+      - /mnt/hdd/mediaserver/data/torrents:/data/torrents
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+  homeassistant:
+    network_mode: host
+    privileged: true
+    container_name: homeassistant
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    volumes:
+      - /mnt/issd/homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+
+  postgresml:
+    image: ghcr.io/postgresml/postgresml:2.10.0
+    ports:
+      - "5433:5432"
+      - "8000:8000"
+    volumes:
+      - /mnt/essd/pgml:/var/lib/postgresql
+    command: sudo -u postgresml psql -d postgresml
+    tty: true
+    stdin_open: true
+
+#Github Action Runner
